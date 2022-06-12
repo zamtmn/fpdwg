@@ -9974,6 +9974,10 @@ in declaration at line 8055 *)
  in member_list *)
 
       _dwg_chain = record
+          opts : byte;
+          version : Dwg_Version_Type;
+          from_version : Dwg_Version_Type;
+          fh : pointer;
         end;
       Dwg_Chain = _dwg_chain;
     { since r2004+  }
