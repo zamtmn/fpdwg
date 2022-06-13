@@ -1,7 +1,23 @@
-unit dwg;
-interface
-uses
-  ctypes;
+{*************************************************************************** }
+{  LibreDWG - free implementation of the DWG file format                     }
+{                                                                            }
+{  Copyright (C) 2009-2010,2018-2021 Free Software Foundation, Inc.          }
+{                                                                            }
+{  This library is free software, licensed under the terms of the GNU        }
+{  General Public License as published by the Free Software Foundation,      }
+{  either version 3 of the License, or (at your option) any later version.   }
+{  You should have received a copy of the GNU General Public License         }
+{  along with this program.  If not, see <http://www.gnu.org/licenses/>.     }
+{*************************************************************************** }
+{
+ * dwg.h: main public header file (the other variant is dwg_api.h)
+ *
+ * written by Felipe Castro
+ * modified by Felipe Corrêa da Silva Sances
+ * modified by Rodrigo Rodrigues da Silva
+ * modified by Till Heuschmann
+ * modified by Reini Urban
+}
 
 {
   Automatically converted by H2Pas 1.0.0 from dwg.h
@@ -9,370 +25,102 @@ uses
     dwg.h
 }
 
+unit dwg;
+
 {$IFDEF FPC}
-{$PACKRECORDS C}
-{$MACRO ON}
+  {$PACKRECORDS C}
+  {$MACRO ON}
+  {$IFDEF Windows}
+    {$DEFINE extdecl := stdcall}
+  {$ELSE}
+    {$DEFINE extdecl := cdecl}
+  {$ENDIF}
 {$ENDIF}
 
-
-  {*************************************************************************** }
-  {  LibreDWG - free implementation of the DWG file format                     }
-  {                                                                            }
-  {  Copyright (C) 2009-2010,2018-2021 Free Software Foundation, Inc.          }
-  {                                                                            }
-  {  This library is free software, licensed under the terms of the GNU        }
-  {  General Public License as published by the Free Software Foundation,      }
-  {  either version 3 of the License, or (at your option) any later version.   }
-  {  You should have received a copy of the GNU General Public License         }
-  {  along with this program.  If not, see <http://www.gnu.org/licenses/>.     }
-  {*************************************************************************** }
-  {
-   * dwg.h: main public header file (the other variant is dwg_api.h)
-   *
-   * written by Felipe Castro
-   * modified by Felipe Corrêa da Silva Sances
-   * modified by Rodrigo Rodrigues da Silva
-   * modified by Till Heuschmann
-   * modified by Reini Urban
-    }
-{$ifndef DWG_H}
-{$define DWG_H}  
+interface
+  uses
+    ctypes;
 
   const
+
+  {$if defined(Windows)}
+    LibreDWG_Lib = 'libredwg-0.dll';
+  {$elseif defined(OS2)}
+    //LibreDWG_Lib = '';
+  {$elseif defined(darwin)}
+    //LibreDWG_LIB =  '';
+  {$elseif defined(haiku) or defined(OpenBSD)}
+    //LibreDWG_LIB = '';
+  {$elseif defined(MorphOS)}
+    //LibreDWG_LIB = '';
+  {$else}
+    LibreDWG_LIB = 'libredwg.so';
+  {$endif}
+
     LIBREDWG_VERSION_MAJOR = 0;    
-    LIBREDWG_VERSION_MINOR = 10;    
-(* error 
-#define LIBREDWG_VERSION       ((LIBREDWG_VERSION_MAJOR * 100) + LIBREDWG_VERSION_MINOR)
-in define line 28 *)
-(* error 
-#define LIBREDWG_SO_VERSION    0:10:0
-in define line 29 *)
-    { for uint64_t, but not in swig  }
-{$ifndef SWIGIMPORTED}
-{todo: comment}//{$include <stdint.h>}
-{todo: comment}//{$include <inttypes.h>}
-    { wchar for R2007+ support
-     * But we need the win32 UTF-16 variant, not UTF-32.
-     * i.e. only on Windows, AIX, Solaris
-      }
-{$if defined(HAVE_WCHAR_H) && defined(SIZEOF_WCHAR_T) && SIZEOF_WCHAR_T == 2}
-{$include <wchar.h>}
-{$define HAVE_NATIVE_WCHAR2}    
+    LIBREDWG_VERSION_MINOR = 10;
+    LIBREDWG_VERSION       = LIBREDWG_VERSION_MAJOR * 100 + LIBREDWG_VERSION_MINOR;
+    LIBREDWG_SO_VERSION    = '0:10:0';
 
-    const
-      DWGCHAR = wchar_t;      
-      dwg_wchar_t = wchar_t;      
-{$endif}
-{$endif}
-{$ifndef EXPORT}
-{$ifdef SWIG}
-(* error 
-#  define EXPORT extern
-in define line 50 *)
-(*** was #elif ****){$else defined(_WIN32) && defined(ENABLE_SHARED)}
-{$ifdef DLL_EXPORT}
-
-    { was #define dname def_expr }
-    function &EXPORT : longint; { return type might be wrong }
-
-{$else}
-
-  { was #define dname def_expr }
-  function &EXPORT : longint; { return type might be wrong }
-
-{$endif}
-{todo: comment}//(*** was #elif ****){$else defined(__clang__) || defined(__clang) || \}
-(* error 
-        (defined( __GNUC__) && ((__GNUC__ * 100) + __GNUC_MINOR__) >= 303)
-in define line 59 *)
-{todo: comment}//{$else}
-{$define EXPORT}    
-{$endif}
-{$endif}
-{$undef restrict}
 
 {todo: comment}//    const
-      type
-      BITCODE_DOUBLE = double;
-    { The FORMAT_* are for logging only  }
 
-    type
-      BITCODE_RC = byte;
-{$ifdef _MSC_VER}
-
-    const
-      FORMAT_RC = '0x%2x';      
-      SCANF_2X = '%2X';      
-{$else}
-
-    const
-      FORMAT_RC = '0x%hhx';      
-      SCANF_2X = '%2hhX';      
-{$endif}
-
-    const
-      FORMAT_RCd = '%d';      
-      FORMAT_RCu = '%u';      
-      FORMAT_RCx = '0x%x';      
-
-    type
-      BITCODE_RCd = char;
-
-      BITCODE_RCu = byte;
-
-      BITCODE_RCx = byte;
-
-      BITCODE_B = byte;
-
-    const
-      FORMAT_B = '%d';      
-
-    type
-      BITCODE_BB = byte;
-
-    const
-      FORMAT_BB = '%u';      
-    { Since R24  }
-
-    type
-      BITCODE_3B = byte;
-
-    const
-      FORMAT_3B = '%u';      
-    {#ifdef HAVE_STDINT_H }
-    {#define BITCODE_BS uint16_t }
-    {#define BITCODE_RS uint16_t }
-    {#define BITCODE_BL uint32_t }
-    {#define BITCODE_RL uint32_t }
-    {#define BITCODE_BLd int32_t }
-    {#define BITCODE_RLd int32_t }
-
-    type
-      uint8_t=cuint8;
-      int8_t=cint8;
-      uint16_t=cuint16;
-      int16_t=cint16;
-      uint32_t=cuint32;
-      int32_t=cint32;
-      uint64_t=cuint64;
-      int64_t=cint64;
-
-      BITCODE_BS = uint16_t;
-
-      BITCODE_BSd = int16_t;
-
-      BITCODE_BSx = uint16_t;
-
-      BITCODE_RS = uint16_t;
-
-      BITCODE_RSd = int16_t;
-
-      BITCODE_RSx = uint16_t;
-
-      BITCODE_BL = uint32_t;
-
-      BITCODE_BLx = uint32_t;
-
-      BITCODE_BLd = int32_t;
-
-      BITCODE_RL = uint32_t;
-
-      BITCODE_RLx = uint32_t;
-
-      BITCODE_RLd = int32_t;
-    { e.g. old cygwin 64 vs 32  }
-    {#else
-    # if defined(__WORDSIZE) && __WORDSIZE == 64
-      typedef unsigned short int BITCODE_BS;
-      typedef unsigned short int BITCODE_RS;
-      typedef unsigned int BITCODE_BL;
-      typedef unsigned int BITCODE_RL;
-      typedef int BITCODE_BLd;
-      typedef int BITCODE_RLd;
-    # else
-      typedef unsigned short int BITCODE_BS;
-      typedef unsigned short int BITCODE_RS;
-      typedef unsigned long BITCODE_BL;
-      typedef unsigned long BITCODE_RL;
-      typedef long BITCODE_BLd;
-      typedef long BITCODE_RLd;
-    # endif
-    #endif
-     }
-    {#ifdef HAVE_INTTYPES_H }
-(* error 
-#define FORMAT_BS "%" PRIu16
-in define line 134 *)
-(* error 
-#define FORMAT_BSd "%" PRId16
-in define line 135 *)
-(* error 
-#define FORMAT_BSx "0x%" PRIx16
-in define line 136 *)
-(* error 
-#define FORMAT_RS "%" PRIu16
-in define line 137 *)
-(* error 
-#define FORMAT_RSd "%" PRId16
-in define line 138 *)
-(* error 
-#define FORMAT_RSx "0x%" PRIx16
-in define line 139 *)
-(* error 
-#define FORMAT_BL "%" PRIu32
-in define line 140 *)
-(* error 
-#define FORMAT_RL "%" PRIu32
-in define line 141 *)
-(* error 
-#define FORMAT_BLd "%" PRId32
-in define line 142 *)
-(* error 
-#define FORMAT_RLd "%" PRId32
-in define line 143 *)
-(* error 
-#define FORMAT_RLx "0x%" PRIx32
-in define line 144 *)
-(* error 
-#define FORMAT_BLX "%" PRIX32
-in define line 145 *)
-(* error 
-#define FORMAT_BLx "0x%" PRIx32
-in define line 146 *)
-    {#else
-    # define FORMAT_BS "%hu"
-    # define FORMAT_RS "%hu"
-    # define FORMAT_BL "%u"
-    # define FORMAT_RL "%u"
-    # define FORMAT_BLd "%d"
-    # define FORMAT_RLd "%d"
-    # define FORMAT_BLX "%X"
-    # define FORMAT_BLx "%x"
-    #endif
-     }
-
-      BITCODE_MC = longint;
-
-    const
-      FORMAT_MC = '%ld';
-      FORMAT_BL= '%u';
-
-    type
-      BITCODE_UMC = dword;
-
-    const
-      FORMAT_UMC = '%lu';      
-
-    type
-      BITCODE_MS = BITCODE_BL;
-
-    const
-      FORMAT_MS = FORMAT_BL;      
-
-    type
-      BITCODE_RD = BITCODE_DOUBLE;
-
-    const
-      FORMAT_RD = '%f';      
-    { Since R2004  }
-
-    type
-      BITCODE_RLL = uint64_t;
-
-      BITCODE_BLL = uint64_t;
-(* error 
-#define FORMAT_RLL "0x%" PRIx64
-in define line 169 *)
-(* error 
-#define FORMAT_BLL "%" PRIu64
-in define line 170 *)
-{$ifndef HAVE_NATIVE_WCHAR2}
-
-    type
-      dwg_wchar_t = BITCODE_RS;
-
-    {todo: comment}//const
-      DWGCHAR = dwg_wchar_t;      
-{$endif}
-
-    type
-      BITCODE_TF = ^byte;
-(* error 
-#define FORMAT_TF "\"%s\""
-in define line 176 *)
-
-      BITCODE_TV = ^char;
-(* error 
-#define FORMAT_TV "\"%s\""
-in define line 178 *)
-
-{todo: comment}//    const
-      BITCODE_T16 = BITCODE_TV;      
-(* error 
-#define FORMAT_T16 "\"%s\""
-in define line 180 *)
-      BITCODE_T32 = BITCODE_TV;      
-(* error 
-#define FORMAT_T32 "\"%s\""
-in define line 182 *)
-      BITCODE_TU32 = BITCODE_TV;      
-(* error 
-#define FORMAT_TU32 "\"%s\""
-in define line 184 *)
-
-    type
-      BITCODE_BT = BITCODE_DOUBLE;
-
-    const
-      FORMAT_BT = '%f';      
-
-    type
-      BITCODE_DD = BITCODE_DOUBLE;
-
-    const
-      FORMAT_DD = '%f';      
-
-    type
-      BITCODE_BD = BITCODE_DOUBLE;
-
-    const
-      FORMAT_BD = '%f';      
-
-    type
-      BITCODE_4BITS = BITCODE_RC;
-
-    const
-      FORMAT_4BITS = '%1x';      
-    { double stored as string. ARCALIGNEDTEXT  }
-
-    type
-      BITCODE_D2T = BITCODE_TV;
-
-    const
-      FORMAT_D2T = '%s';      
-    { TODO: implement version dependent string parsing  }
-    { encode codepages/utf8  }
-    {todo: comment}//
-    type
-      BITCODE_T = BITCODE_TV;      
-{$ifdef HAVE_NATIVE_WCHAR2}
-
-    type
-      BITCODE_TU = ^dwg_wchar_t;
-    { native UCS-2 wchar_t  }
-(* error 
-# define FORMAT_TU "\"%ls\""
-in define line 202 *)
-{$else}
-
-    type
-      BITCODE_TU = ^BITCODE_RS;
-    { UCS-2 unicode text  }
-(* error 
-# define FORMAT_TU "\"%hn\""       /* will print garbage */
-    { will print garbage  }
-in define line 205 *)
-{$endif}
+  type
+    uint8_t  = cuint8;
+    int8_t   = cint8;
+    uint16_t = cuint16;
+    int16_t  = cint16;
+    uint32_t = cuint32;
+    int32_t  = cint32;
+    uint64_t = cuint64;
+    int64_t  = cint64;
+  type
+    BITCODE_DOUBLE = double;
+    BITCODE_RC = byte;
+    BITCODE_RCd = char;
+    BITCODE_RCu = byte;
+    BITCODE_RCx = byte;
+    BITCODE_B = byte;
+    BITCODE_BB = byte;
+    BITCODE_3B = byte;
+    BITCODE_BS = uint16_t;
+    BITCODE_BSd = int16_t;
+    BITCODE_BSx = uint16_t;
+    BITCODE_RS = uint16_t;
+    BITCODE_RSd = int16_t;
+    BITCODE_RSx = uint16_t;
+    BITCODE_BL = uint32_t;
+    BITCODE_BLx = uint32_t;
+    BITCODE_BLd = int32_t;
+    BITCODE_RL = uint32_t;
+    BITCODE_RLx = uint32_t;
+    BITCODE_RLd = int32_t;
+    BITCODE_MC = longint;
+    BITCODE_UMC = dword;
+    BITCODE_MS = BITCODE_BL;
+    BITCODE_RD = BITCODE_DOUBLE;
+    BITCODE_RLL = uint64_t;
+    BITCODE_BLL = uint64_t;
+ {$ifndef HAVE_NATIVE_WCHAR2}
+    dwg_wchar_t = BITCODE_RS;
+    DWGCHAR = dwg_wchar_t;
+ {$endif}
+    BITCODE_TF = ^byte;
+    BITCODE_TV = ^char;
+    BITCODE_T16 = BITCODE_TV;
+    BITCODE_T32 = BITCODE_TV;
+    BITCODE_TU32 = BITCODE_TV;
+    BITCODE_BT = BITCODE_DOUBLE;
+    BITCODE_DD = BITCODE_DOUBLE;
+    BITCODE_BD = BITCODE_DOUBLE;
+    BITCODE_4BITS = BITCODE_RC;
+    BITCODE_D2T = BITCODE_TV;
+    BITCODE_T = BITCODE_TV;
+ {$ifdef HAVE_NATIVE_WCHAR2}
+    BITCODE_TU = ^dwg_wchar_t;
+ {$else}
+    BITCODE_TU = ^BITCODE_RS;
+ {$endif}
 
     type
       _dwg_time_bll = record
@@ -9963,21 +9711,17 @@ in declaration at line 8055 *)
     {*
      Dwg_Chain similar to Bit_Chain in "bits.h". Used only for the Thumbnail thumbnail
       }
-(* error 
-  long unsigned int size;
-    { NOT:
-      unsigned char opts;
-      Dwg_Version_Type version;
-      Dwg_Version_Type from_version;
-      FILE *fh;
-       }
- in member_list *)
-
       _dwg_chain = record
+         {NOT:
           opts : byte;
           version : Dwg_Version_Type;
           from_version : Dwg_Version_Type;
-          fh : pointer;
+          fh : pointer;}
+          chain : Pointer;//unsigned char *chain;
+          size : LongWord;//long unsigned int size;
+          byte : LongWord;//long unsigned int byte;
+          bit : byte;//unsigned char bit;
+
         end;
       Dwg_Chain = _dwg_chain;
     { since r2004+  }
@@ -12061,7 +11805,7 @@ in declaration at line 9780 *)
 {$endif}
     { End auto-generated content  }
 { C++ end of extern C conditionnal removed }
-{$endif}
+{endif}
 
 
 
