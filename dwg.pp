@@ -39,10 +39,9 @@ unit dwg;
 
 interface
   uses
-    ctypes;
+    ctypes, SysUtils;
 
   const
-
   {$if defined(Windows)}
     LibreDWG_Lib = 'libredwg-0.dll';
   {$elseif defined(OS2)}
@@ -56,24 +55,20 @@ interface
   {$else}
     LibreDWG_LIB = 'libredwg.so';
   {$endif}
-
-    LIBREDWG_VERSION_MAJOR = 0;    
+    LIBREDWG_VERSION_MAJOR = 0;
     LIBREDWG_VERSION_MINOR = 10;
     LIBREDWG_VERSION       = LIBREDWG_VERSION_MAJOR * 100 + LIBREDWG_VERSION_MINOR;
     LIBREDWG_SO_VERSION    = '0:10:0';
 
-
-{todo: comment}//    const
-
   type
-    uint8_t  = cuint8;
-    int8_t   = cint8;
+     uint8_t = cuint8;
+      int8_t = cint8;
     uint16_t = cuint16;
-    int16_t  = cint16;
+     int16_t = cint16;
     uint32_t = cuint32;
-    int32_t  = cint32;
+     int32_t = cint32;
     uint64_t = cuint64;
-    int64_t  = cint64;
+     int64_t = cint64;
   type
     BITCODE_DOUBLE = double;
     BITCODE_RC = byte;
@@ -155,32 +150,18 @@ interface
           z : BITCODE_BD;
         end;
       Dwg_Bitcode_3BD = _dwg_bitcode_3bd;
-
       BITCODE_TIMEBLL = Dwg_Bitcode_TimeBLL;
-
       BITCODE_TIMERLL = Dwg_Bitcode_TimeBLL;
-    { #define FORMAT_TIMEBLL FORMAT_BL "." FORMAT_BL  }
-
       BITCODE_2RD = Dwg_Bitcode_2RD;
-
       BITCODE_2BD = Dwg_Bitcode_2BD;
-
       BITCODE_2DPOINT = Dwg_Bitcode_2BD;
-
       BITCODE_2BD_1 = Dwg_Bitcode_2BD;
-
       BITCODE_3RD = Dwg_Bitcode_3RD;
-
       BITCODE_3BD = Dwg_Bitcode_3BD;
-
       BITCODE_3DPOINT = Dwg_Bitcode_3BD;
-
       BITCODE_3BD_1 = Dwg_Bitcode_3BD;
-
       BITCODE_BE = Dwg_Bitcode_3BD;
-
-      {todo: comment}//    const
-      BITCODE_3DVECTOR = BITCODE_3BD_1;      
+      BITCODE_3DVECTOR = BITCODE_3BD_1;
     { MC0.0/0  MicroCAD Release 1.1  }
     { AC1.2/0  AutoCAD Release 1.2  }
     { AC1.3/1  AutoCAD Release 1.3  }
@@ -10422,6 +10403,7 @@ in declaration at line 8055 *)
           next_hdl : dword;
         end;
       Dwg_Data = _dwg_struct;
+      PDwg_Data=^Dwg_Data;
 
       RESBUF_VALUE_TYPE = (DWG_VT_INVALID := 0,DWG_VT_STRING := 1,
         DWG_VT_POINT3D := 2,DWG_VT_REAL := 3,
@@ -11841,28 +11823,24 @@ in declaration at line 9780 *)
 
 
 
-
     function codepage(var a : _dwg_binary_chunk) : dword;
     procedure set_codepage(var a : _dwg_binary_chunk; __codepage : dword);
     function is_tu(var a : _dwg_binary_chunk) : dword;
     procedure set_is_tu(var a : _dwg_binary_chunk; __is_tu : dword);
 
+  var
+    dwg_read_file : function(const filename:pchar;
+                             dwg:PDwg_Data):integer;extdecl;
+    dwg_free : procedure(dwg:PDwg_Data);extdecl;
+
+    procedure FreeLibreDWG;
+    procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib);
+
 
 implementation
+  var
+    hlib : tlibhandle;
 
-    { was #define dname def_expr }
-    function &EXPORT : longint; { return type might be wrong }
-      begin
-        &EXPORT:=0;//__declspec(dllexport);
-      end;
-
-  (*{ was #define dname def_expr }
-  function &EXPORT : longint; { return type might be wrong }
-    begin
-      &EXPORT:=0;//__declspec(dllimport);
-    end;*)
-
-    { was #define dname def_expr }
     function DWG_VERSIONS : longint;
       begin
         DWG_VERSIONS:=longint(ord(R_AFTER)+1);
@@ -11888,5 +11866,29 @@ implementation
         a.flag0:=a.flag0 or ((__is_tu shl bp__dwg_binary_chunk_is_tu) and bm__dwg_binary_chunk_is_tu);
       end;
 
+    procedure FreeLibreDWG;
+    begin
+      if (hlib <> 0) then
+        FreeLibrary(hlib);
 
+      dwg_read_file:=nil;
+      dwg_free:=nil;
+    end;
+
+    procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib);
+      begin
+        FreeLibreDWG;
+        hlib:=LoadLibrary(lib);
+        if hlib=0 then
+          raise Exception.Create(format('Could not load library: %s',[lib]));
+
+        pointer(dwg_read_file):=GetProcAddress(hlib,'dwg_read_file');
+        pointer(dwg_free):=GetProcAddress(hlib,'dwg_free');
+      end;
+
+initialization
+  hlib:=0;
+  FreeLibreDWG;
+finalization
+  FreeLibreDWG;
 end.
