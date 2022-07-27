@@ -39,7 +39,7 @@ unit dwg;
 
 interface
   uses
-    ctypes, SysUtils;
+    SysUtils, ctypes, dynlibs;
 
   const
   {$if defined(Windows)}
@@ -11834,7 +11834,7 @@ in declaration at line 9780 *)
     dwg_free : procedure(dwg:PDwg_Data);extdecl;
 
     procedure FreeLibreDWG;
-    procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib);
+    procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib; reloadlib : Boolean = False);
 
 
 implementation
@@ -11870,20 +11870,22 @@ implementation
     begin
       if (hlib <> 0) then
         FreeLibrary(hlib);
-
+      hlib:=0;
       dwg_read_file:=nil;
       dwg_free:=nil;
     end;
 
-    procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib);
+    procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib; reloadlib : Boolean = False);
       begin
-        FreeLibreDWG;
-        hlib:=LoadLibrary(lib);
+        if reloadlib then
+          FreeLibreDWG;
+        if hlib = 0 then begin
+          hlib:=LoadLibrary(lib);
+          pointer(dwg_read_file):=GetProcAddress(hlib,'dwg_read_file');
+          pointer(dwg_free):=GetProcAddress(hlib,'dwg_free');
+        end;
         if hlib=0 then
           raise Exception.Create(format('Could not load library: %s',[lib]));
-
-        pointer(dwg_read_file):=GetProcAddress(hlib,'dwg_read_file');
-        pointer(dwg_free):=GetProcAddress(hlib,'dwg_free');
       end;
 
 initialization
