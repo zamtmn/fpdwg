@@ -11831,6 +11831,8 @@ in declaration at line 9780 *)
   var
     dwg_read_file : function(const filename:pchar;
                              dwg:PDwg_Data):integer;extdecl;
+    dxf_read_file : function(const filename:pchar;
+                             dwg:PDwg_Data):integer;extdecl;
     dwg_free : procedure(dwg:PDwg_Data);extdecl;
 
     procedure FreeLibreDWG;
@@ -11872,6 +11874,7 @@ implementation
         FreeLibrary(hlib);
       hlib:=0;
       dwg_read_file:=nil;
+      dxf_read_file:=nil;
       dwg_free:=nil;
     end;
 
@@ -11882,6 +11885,7 @@ implementation
         if hlib = 0 then begin
           hlib:=LoadLibrary(lib);
           pointer(dwg_read_file):=GetProcAddress(hlib,'dwg_read_file');
+          pointer(dxf_read_file):=GetProcAddress(hlib,'dxf_read_file');
           pointer(dwg_free):=GetProcAddress(hlib,'dwg_free');
         end;
         if hlib=0 then
