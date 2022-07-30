@@ -2254,7 +2254,7 @@ EXPORT const char* dwg_color_method_name (unsigned method);
     { DXF 6  }
     { DXF 348  }
       _dwg_object_LAYER = record
-          {$define BITCODE_XXlaytype:=BITCODE_RC}
+          {$define BITCODE_XXlaytype:=BITCODE_BS}
           COMMON_TABLE_FIELDS;
           {$undef BITCODE_XXlaytype}
           frozen : BITCODE_B;
