@@ -39,22 +39,10 @@ unit dwg;
 
 interface
   uses
-    SysUtils, ctypes, dynlibs;
+    SysUtils, ctypes;
 
   const
-  {$if defined(Windows)}
-    LibreDWG_Lib = 'libredwg-0.dll';
-  {$elseif defined(OS2)}
-    //LibreDWG_Lib = '';
-  {$elseif defined(darwin)}
-    //LibreDWG_LIB =  '';
-  {$elseif defined(haiku) or defined(OpenBSD)}
-    //LibreDWG_LIB = '';
-  {$elseif defined(MorphOS)}
-    //LibreDWG_LIB = '';
-  {$else}
-    LibreDWG_LIB = 'libredwg.so';
-  {$endif}
+
     LIBREDWG_VERSION_MAJOR = 0;
     LIBREDWG_VERSION_MINOR = 10;
     LIBREDWG_VERSION       = LIBREDWG_VERSION_MAJOR * 100 + LIBREDWG_VERSION_MINOR;
@@ -11828,20 +11816,7 @@ in declaration at line 9780 *)
     function is_tu(var a : _dwg_binary_chunk) : dword;
     procedure set_is_tu(var a : _dwg_binary_chunk; __is_tu : dword);
 
-  var
-    dwg_read_file : function(const filename:pchar;
-                             dwg:PDwg_Data):integer;extdecl;
-    dxf_read_file : function(const filename:pchar;
-                             dwg:PDwg_Data):integer;extdecl;
-    dwg_free : procedure(dwg:PDwg_Data);extdecl;
-
-    procedure FreeLibreDWG;
-    procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib; reloadlib : Boolean = False);
-
-
 implementation
-  var
-    hlib : tlibhandle;
 
     function DWG_VERSIONS : longint;
       begin
@@ -11868,33 +11843,6 @@ implementation
         a.flag0:=a.flag0 or ((__is_tu shl bp__dwg_binary_chunk_is_tu) and bm__dwg_binary_chunk_is_tu);
       end;
 
-    procedure FreeLibreDWG;
-    begin
-      if (hlib <> 0) then
-        FreeLibrary(hlib);
-      hlib:=0;
-      dwg_read_file:=nil;
-      dxf_read_file:=nil;
-      dwg_free:=nil;
-    end;
-
-    procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib; reloadlib : Boolean = False);
-      begin
-        if reloadlib then
-          FreeLibreDWG;
-        if hlib = 0 then begin
-          hlib:=LoadLibrary(lib);
-          pointer(dwg_read_file):=GetProcAddress(hlib,'dwg_read_file');
-          pointer(dxf_read_file):=GetProcAddress(hlib,'dxf_read_file');
-          pointer(dwg_free):=GetProcAddress(hlib,'dwg_free');
-        end;
-        if hlib=0 then
-          raise Exception.Create(format('Could not load library: %s',[lib]));
-      end;
-
 initialization
-  hlib:=0;
-  FreeLibreDWG;
 finalization
-  FreeLibreDWG;
 end.

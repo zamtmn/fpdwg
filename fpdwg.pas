@@ -8,7 +8,7 @@ unit fpdwg;
 interface
 
 uses
-  dwg, LazarusPackageIntf;
+  dwg, dwgproc, LazarusPackageIntf;
 
 implementation
 
