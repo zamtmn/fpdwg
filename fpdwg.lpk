@@ -8,13 +8,17 @@
       <Version Value="11"/>
       <PathDelim Value="\"/>
       <SearchPaths>
-        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\"/>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
     </CompilerOptions>
     <Files>
       <Item>
         <Filename Value="dwg.pp"/>
         <UnitName Value="dwg"/>
+      </Item>
+      <Item>
+        <Filename Value="dwgproc.pp"/>
+        <UnitName Value="dwgproc"/>
       </Item>
     </Files>
     <RequiredPkgs>
