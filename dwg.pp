@@ -1,3 +1,14 @@
+{*************************************************************************** }
+{  gfdwg - free implementation of the DWG file format based on LibreDWG      }
+{                                                                            }
+{        Copyright (C) 2022 Andrey Zubarev <zamtmn@yandex.ru>                }
+{                                                                            }
+{  This library is free software, licensed under the terms of the GNU        }
+{  General Public License as published by the Free Software Foundation,      }
+{  either version 3 of the License, or (at your option) any later version.   }
+{  You should have received a copy of the GNU General Public License         }
+{  along with this program.  If not, see <http://www.gnu.org/licenses/>.     }
+{*************************************************************************** }
 
 unit dwg;
 interface
@@ -13,18 +24,6 @@ uses
     -o
     dwg.pp
 }
-
-    const
-      External_library=''; {Setup as you need}
-
-    { Pointers to basic pascal types, inserted by h2pas conversion program.}
-    Type
-      PLongint  = ^Longint;
-      PSmallInt = ^SmallInt;
-      PByte     = ^Byte;
-      PWord     = ^Word;
-      PDWord    = ^DWord;
-      PDouble   = ^Double;
 
     Type
     P_dwg_3DSOLID_material  = ^_dwg_3DSOLID_material;
@@ -10548,15 +10547,15 @@ in declaration at line 7399 *)
       //bm__dwg_entity_eed_data_is_tu = $8000;
       //bp__dwg_entity_eed_data_is_tu = 15;
 
-    function codepage(var a : _dwg_binary_chunk) : dword;
+    {function codepage(var a : _dwg_binary_chunk) : dword;
     procedure set_codepage(var a : _dwg_binary_chunk; __codepage : dword);
     function is_tu(var a : _dwg_binary_chunk) : dword;
-    procedure set_is_tu(var a : _dwg_binary_chunk; __is_tu : dword);
+    procedure set_is_tu(var a : _dwg_binary_chunk; __is_tu : dword);}
 
 
 implementation
 
-    function codepage(var a : _dwg_binary_chunk) : dword;
+    {function codepage(var a : _dwg_binary_chunk) : dword;
       begin
         codepage:=(a.flag0 and bm__dwg_binary_chunk_codepage) shr bp__dwg_binary_chunk_codepage;
       end;
@@ -10574,7 +10573,7 @@ implementation
     procedure set_is_tu(var a : _dwg_binary_chunk; __is_tu : dword);
       begin
         a.flag0:=a.flag0 or ((__is_tu shl bp__dwg_binary_chunk_is_tu) and bm__dwg_binary_chunk_is_tu);
-      end;
+      end;}
 
 
 end.
