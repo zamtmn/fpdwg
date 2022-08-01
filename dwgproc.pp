@@ -1,7 +1,7 @@
 {*************************************************************************** }
-{  LibreDWG - free implementation of the DWG file format                     }
+{  gfdwg - free implementation of the DWG file format based on LibreDWG      }
 {                                                                            }
-{  Copyright (C) 2009-2010,2018-2021 Free Software Foundation, Inc.          }
+{        Copyright (C) 2022 Andrey Zubarev <zamtmn@yandex.ru>                }
 {                                                                            }
 {  This library is free software, licensed under the terms of the GNU        }
 {  General Public License as published by the Free Software Foundation,      }
@@ -9,15 +9,6 @@
 {  You should have received a copy of the GNU General Public License         }
 {  along with this program.  If not, see <http://www.gnu.org/licenses/>.     }
 {*************************************************************************** }
-{
- * dwg.h: main public header file (the other variant is dwg_api.h)
- *
- * written by Felipe Castro
- * modified by Felipe Corrêa da Silva Sances
- * modified by Rodrigo Rodrigues da Silva
- * modified by Till Heuschmann
- * modified by Reini Urban
-}
 
 unit dwgproc;
 
@@ -29,11 +20,17 @@ unit dwgproc;
   {$ELSE}
     {$DEFINE extdecl := cdecl}
   {$ENDIF}
+  {$Mode objfpc}{$H+}
+  {$ModeSwitch advancedrecords}
 {$ENDIF}
 
 interface
   uses
-    SysUtils, ctypes, dynlibs, dwg;
+    SysUtils, ctypes, dynlibs, dwg, Generics.Collections, TypInfo;
+
+  resourcestring
+    rsHandlerAlreadyReg='Handler already registered for %d';
+    rsCouldNotLoadLib='Could not load library: %s';
 
   const
   {$if defined(Windows)}
@@ -49,6 +46,39 @@ interface
   {$else}
     LibreDWG_LIB = 'libredwg.so';
   {$endif}
+  type
+
+    TDWGCtx=record
+      DWG:Dwg_Data;
+      DWGVer:DWG_VERSION_TYPE;
+      procedure CreateRec(var ADWG:Dwg_Data);
+    end;
+
+    TData=Pointer;
+    TCounter=Integer;
+    TProcessLongProcess=procedure(const Data:TData;const Counter:TCounter);
+
+    generic GDWGParser<GUserCtx>=class
+      type
+        TDWGObjectLoadProc=procedure(var ZContext:GUserCtx;var DWGContext:TDWGCtx;var DWGObject:Dwg_Object;P:Pointer);
+        PTDWGObjectData=^TDWGObjectData;
+        TDWGObjectData=record
+          LoadEntityProc:TDWGObjectLoadProc;
+          LoadObjectProc:TDWGObjectLoadProc;
+          procedure Create;
+        end;
+        TDWGObjectsDataDict=class (specialize TDictionary<DWG_OBJECT_TYPE,TDWGObjectData>)
+          function GetMutableValue(key:DWG_OBJECT_TYPE; out PAValue:PTDWGObjectData):boolean;
+        end;
+      var
+        DWGObj2LPDict:TDWGObjectsDataDict;
+      constructor create;
+      destructor destroy;override;
+      procedure RegisterDWGEntityLoadProc(const DOT:DWG_OBJECT_TYPE;const LP:TDWGObjectLoadProc);
+      procedure RegisterDWGObjectLoadProc(const DOT:DWG_OBJECT_TYPE;const LP:TDWGObjectLoadProc);
+      procedure parseDwg_Data(var ZContext:GUserCtx;var dwg:Dwg_Data;const lpp:TProcessLongProcess;const data:TData);
+    end;
+
 
   var
     dwg_read_file : function(const filename:pchar;
@@ -57,37 +87,156 @@ interface
                              dwg:PDwg_Data):integer;extdecl;
     dwg_free : procedure(dwg:PDwg_Data);extdecl;
 
-    procedure FreeLibreDWG;
-    procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib; reloadlib : Boolean = False);
-
+  procedure FreeLibreDWG;
+  procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib; reloadlib : Boolean = False);
+  procedure BITCODE_T2Text(const p:BITCODE_T;constref DWGContext:TDWGCtx;out text:string);
+  function DWG_V2Str(v:DWG_VERSION_TYPE):string;
 
 implementation
+
   var
     hlib : tlibhandle;
 
-    procedure FreeLibreDWG;
-    begin
-      if (hlib <> 0) then
-        FreeLibrary(hlib);
-      hlib:=0;
-      dwg_read_file:=nil;
-      dxf_read_file:=nil;
-      dwg_free:=nil;
-    end;
+  procedure TDWGCtx.CreateRec(var ADWG:Dwg_Data);
+  begin
+    DWG:=ADWG;
+    DWGVer:=ADWG.HEADER.version;
+    if DWGVer=R_INVALID then
+      DWGVer:=ADWG.HEADER.from_version;
+  end;
 
-    procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib; reloadlib : Boolean = False);
-      begin
-        if reloadlib then
-          FreeLibreDWG;
-        if hlib = 0 then begin
-          hlib:=LoadLibrary(lib);
-          pointer(dwg_read_file):=GetProcAddress(hlib,'dwg_read_file');
-          pointer(dxf_read_file):=GetProcAddress(hlib,'dxf_read_file');
-          pointer(dwg_free):=GetProcAddress(hlib,'dwg_free');
-        end;
-        if hlib=0 then
-          raise Exception.Create(format('Could not load library: %s',[lib]));
+  procedure GDWGParser.TDWGObjectData.Create;
+  begin
+    LoadEntityProc:=nil;
+    LoadObjectProc:=nil;
+  end;
+
+  procedure GDWGParser.RegisterDWGEntityLoadProc(const DOT:DWG_OBJECT_TYPE;const LP:TDWGObjectLoadProc);
+  var
+    pdod:PTDWGObjectData;
+    dod:TDWGObjectData;
+  begin
+    if DWGObj2LPDict.GetMutableValue(DOT,pdod) then begin
+      if pdod^.LoadEntityProc<>nil then
+        raise Exception.Create(format(rsHandlerAlreadyReg,[DOT]))
+      else begin
+        pdod^.LoadEntityProc:=LP;
+        pdod^.LoadObjectProc:=nil;
       end;
+    end else begin
+      dod.Create;
+      dod.LoadEntityProc:=LP;
+      dod.LoadObjectProc:=nil;
+      DWGObj2LPDict.AddOrSetValue(DOT,dod);
+    end;
+  end;
+
+  procedure GDWGParser.RegisterDWGObjectLoadProc(const DOT:DWG_OBJECT_TYPE;const LP:TDWGObjectLoadProc);
+  var
+    pdod:PTDWGObjectData;
+    dod:TDWGObjectData;
+  begin
+    if DWGObj2LPDict.GetMutableValue(DOT,pdod) then begin
+      if pdod^.LoadEntityProc<>nil then
+        raise Exception.Create(format(rsHandlerAlreadyReg,[DOT]))
+      else begin
+        pdod^.LoadEntityProc:=nil;
+        pdod^.LoadObjectProc:=LP;
+      end;
+    end else begin
+      dod.Create;
+      dod.LoadEntityProc:=nil;
+      dod.LoadObjectProc:=LP;
+      DWGObj2LPDict.AddOrSetValue(DOT,dod);
+    end;
+  end;
+
+  procedure GDWGParser.parseDwg_Data(var ZContext:GUserCtx;var dwg:Dwg_Data;const lpp:TProcessLongProcess;const data:TData);
+  var
+    i:BITCODE_BL;
+    pdod:PTDWGObjectData;
+    DWGContext:TDWGCtx;
+  begin
+    DWGContext.CreateRec(dwg);
+    if DWGObj2LPDict<>nil then begin
+      for i := 0 to dwg.num_objects do begin
+        if DWGObj2LPDict.GetMutableValue(dwg.&object[i].fixedtype,pdod) then begin
+          if pdod^.LoadEntityProc<>nil then
+            pdod^.LoadEntityProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.entity^.tio.UNUSED)
+          else if pdod^.LoadObjectProc<>nil then
+            pdod^.LoadObjectProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.&object^.tio.DUMMY);
+        end;
+        if @lpp<>nil then
+          lpp(data,i);
+      end;
+    end;
+  end;
+
+  function GDWGParser.TDWGObjectsDataDict.GetMutableValue(key:DWG_OBJECT_TYPE; out PAValue:PTDWGObjectData):Boolean;
+  var
+    LIndex: SizeInt;
+    LHash: UInt32;
+  begin
+    LIndex := FindBucketIndex(FItems, key, LHash);
+
+    if LIndex < 0 then begin
+      result:=false;
+      PAValue:=nil;
+    end else begin
+      result:=true;
+      PAValue:=@FItems[LIndex].Pair.Value;
+    end;
+  end;
+
+  constructor GDWGParser.create;
+  begin
+    DWGObj2LPDict:=TDWGObjectsDataDict.create;
+  end;
+  destructor GDWGParser.destroy;
+  begin
+    DWGObj2LPDict.Free;
+  end;
+
+  function DWG_V2Str(v:DWG_VERSION_TYPE):string;
+  begin
+    if Ord(v)>Ord(R_AFTER)then
+      v:=R_AFTER;
+    result:=GetEnumName(typeinfo(v),Ord(v));
+  end;
+
+  procedure BITCODE_T2Text(const p:BITCODE_T;constref DWGContext:TDWGCtx;out text:string);
+  begin
+    if DWGContext.dwg.header.version<=R_2004 then
+      text:=pchar(p)
+    else
+      text:=punicodechar(p)
+  end;
+
+
+
+  procedure FreeLibreDWG;
+  begin
+    if (hlib <> 0) then
+      FreeLibrary(hlib);
+    hlib:=0;
+    dwg_read_file:=nil;
+    dxf_read_file:=nil;
+    dwg_free:=nil;
+  end;
+
+  procedure LoadLibreDWG(lib : pchar = LibreDWG_Lib; reloadlib : Boolean = False);
+  begin
+    if reloadlib then
+      FreeLibreDWG;
+    if hlib = 0 then begin
+      hlib:=LoadLibrary(lib);
+      pointer(dwg_read_file):=GetProcAddress(hlib,'dwg_read_file');
+      pointer(dxf_read_file):=GetProcAddress(hlib,'dxf_read_file');
+      pointer(dwg_free):=GetProcAddress(hlib,'dwg_free');
+    end;
+    if hlib=0 then
+      raise Exception.Create(format(rsCouldNotLoadLib,[lib]));
+  end;
 
 initialization
   hlib:=0;
