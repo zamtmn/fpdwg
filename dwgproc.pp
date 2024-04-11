@@ -159,7 +159,8 @@ implementation
   begin
     DWGContext.CreateRec(dwg);
     if DWGObj2LPDict<>nil then begin
-      for i := 0 to dwg.num_objects do begin
+      i:=0;
+      while (i<dwg.num_objects) do begin
         if DWGObj2LPDict.GetMutableValue(dwg.&object[i].fixedtype,pdod) then begin
           if pdod^.LoadEntityProc<>nil then
             pdod^.LoadEntityProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.entity^.tio.UNUSED)
@@ -168,6 +169,7 @@ implementation
         end;
         if @lpp<>nil then
           lpp(data,i);
+        inc(i);
       end;
     end;
   end;
