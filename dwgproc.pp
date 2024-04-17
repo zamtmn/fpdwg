@@ -67,9 +67,11 @@ interface
           LoadObjectProc:TDWGObjectLoadProc;
           procedure Create;
         end;
-        TDWGObjectsDataDict=class (specialize TDictionary<DWG_OBJECT_TYPE,TDWGObjectData>)
-          function GetMutableValue(key:DWG_OBJECT_TYPE; out PAValue:PTDWGObjectData):boolean;
-        end;
+        //work in fpc3.2.2
+        //TDWGObjectsDataDict=class (specialize TDictionary<DWG_OBJECT_TYPE,TDWGObjectData>)
+        //  function GetMutableValue(key:DWG_OBJECT_TYPE; out PAValue:PTDWGObjectData):boolean;
+        //end;
+        TDWGObjectsDataDict=specialize TDictionary<DWG_OBJECT_TYPE,TDWGObjectData>;
       var
         DWGObj2LPDict:TDWGObjectsDataDict;
       constructor create;
@@ -116,19 +118,20 @@ implementation
     pdod:PTDWGObjectData;
     dod:TDWGObjectData;
   begin
-    if DWGObj2LPDict.GetMutableValue(DOT,pdod) then begin
-      if pdod^.LoadEntityProc<>nil then
-        raise Exception.Create(format(rsHandlerAlreadyReg,[DOT]))
-      else begin
-        pdod^.LoadEntityProc:=LP;
-        pdod^.LoadObjectProc:=nil;
-      end;
-    end else begin
+    //work in fpc3.2.2
+    //if DWGObj2LPDict.GetMutableValue(DOT,pdod) then begin
+    //  if pdod^.LoadEntityProc<>nil then
+    //    raise Exception.Create(format(rsHandlerAlreadyReg,[DOT]))
+    //  else begin
+    //    pdod^.LoadEntityProc:=LP;
+    //    pdod^.LoadObjectProc:=nil;
+    //  end;
+    //end else begin
       dod.Create;
       dod.LoadEntityProc:=LP;
       dod.LoadObjectProc:=nil;
       DWGObj2LPDict.AddOrSetValue(DOT,dod);
-    end;
+    //end;
   end;
 
   procedure GDWGParser.RegisterDWGObjectLoadProc(const DOT:DWG_OBJECT_TYPE;const LP:TDWGObjectLoadProc);
@@ -136,36 +139,59 @@ implementation
     pdod:PTDWGObjectData;
     dod:TDWGObjectData;
   begin
-    if DWGObj2LPDict.GetMutableValue(DOT,pdod) then begin
-      if pdod^.LoadEntityProc<>nil then
-        raise Exception.Create(format(rsHandlerAlreadyReg,[DOT]))
-      else begin
-        pdod^.LoadEntityProc:=nil;
-        pdod^.LoadObjectProc:=LP;
-      end;
-    end else begin
+    //work in fpc3.2.2
+    //if DWGObj2LPDict.GetMutableValue(DOT,pdod) then begin
+    //  if pdod^.LoadEntityProc<>nil then
+    //    raise Exception.Create(format(rsHandlerAlreadyReg,[DOT]))
+    //  else begin
+    //    pdod^.LoadEntityProc:=nil;
+    //    pdod^.LoadObjectProc:=LP;
+    //  end;
+    //end else begin
       dod.Create;
       dod.LoadEntityProc:=nil;
       dod.LoadObjectProc:=LP;
       DWGObj2LPDict.AddOrSetValue(DOT,dod);
-    end;
+    //end;
   end;
 
   procedure GDWGParser.parseDwg_Data(var ZContext:GUserCtx;var dwg:Dwg_Data;const lpp:TProcessLongProcess;const data:TData);
+  //work in fpc3.2.2
+  //var
+  //  i:BITCODE_BL;
+  //  pdod:PTDWGObjectData;
+  //  DWGContext:TDWGCtx;
+  //begin
+  //  DWGContext.CreateRec(dwg);
+  //  if DWGObj2LPDict<>nil then begin
+  //    i:=0;
+  //    while (i<dwg.num_objects) do begin
+  //      if DWGObj2LPDict.GetMutableValue(dwg.&object[i].fixedtype,pdod) then begin
+  //        if pdod^.LoadEntityProc<>nil then
+  //          pdod^.LoadEntityProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.entity^.tio.UNUSED)
+  //        else if pdod^.LoadObjectProc<>nil then
+  //          pdod^.LoadObjectProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.&object^.tio.DUMMY);
+  //      end;
+  //      if @lpp<>nil then
+  //        lpp(data,i);
+  //      inc(i);
+  //    end;
+  //  end;
+  //end;
   var
     i:BITCODE_BL;
-    pdod:PTDWGObjectData;
+    dod:TDWGObjectData;
     DWGContext:TDWGCtx;
   begin
     DWGContext.CreateRec(dwg);
     if DWGObj2LPDict<>nil then begin
       i:=0;
       while (i<dwg.num_objects) do begin
-        if DWGObj2LPDict.GetMutableValue(dwg.&object[i].fixedtype,pdod) then begin
-          if pdod^.LoadEntityProc<>nil then
-            pdod^.LoadEntityProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.entity^.tio.UNUSED)
-          else if pdod^.LoadObjectProc<>nil then
-            pdod^.LoadObjectProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.&object^.tio.DUMMY);
+        if DWGObj2LPDict.TryGetValue(dwg.&object[i].fixedtype,dod) then begin
+          if dod.LoadEntityProc<>nil then
+            dod.LoadEntityProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.entity^.tio.UNUSED)
+          else if dod.LoadObjectProc<>nil then
+            dod.LoadObjectProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.&object^.tio.DUMMY);
         end;
         if @lpp<>nil then
           lpp(data,i);
@@ -174,21 +200,22 @@ implementation
     end;
   end;
 
-  function GDWGParser.TDWGObjectsDataDict.GetMutableValue(key:DWG_OBJECT_TYPE; out PAValue:PTDWGObjectData):Boolean;
-  var
-    LIndex: SizeInt;
-    LHash: UInt32;
-  begin
-    LIndex := FindBucketIndex(FItems, key, LHash);
-
-    if LIndex < 0 then begin
-      result:=false;
-      PAValue:=nil;
-    end else begin
-      result:=true;
-      PAValue:=@FItems[LIndex].Pair.Value;
-    end;
-  end;
+  //work in fpc3.2.2
+  //function GDWGParser.TDWGObjectsDataDict.GetMutableValue(key:DWG_OBJECT_TYPE; out PAValue:PTDWGObjectData):Boolean;
+  //var
+  //  LIndex: SizeInt;
+  //  LHash: UInt32;
+  //begin
+  //  LIndex := FindBucketIndex(FItems, key, LHash);
+  //
+  //  if LIndex < 0 then begin
+  //    result:=false;
+  //    PAValue:=nil;
+  //  end else begin
+  //    result:=true;
+  //    PAValue:=@FItems[LIndex].Pair.Value;
+  //  end;
+  //end;
 
   constructor GDWGParser.create;
   begin

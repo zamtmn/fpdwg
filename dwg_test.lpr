@@ -1,7 +1,7 @@
 program dwg_test;
 uses
   SysUtils,
-  dwg;
+  dwg,dwgproc;
 type
   PBITCODE_BS=^BITCODE_BS;
 
@@ -16,6 +16,7 @@ begin
   fillchar(dwg,sizeof(dwg),0);
   dwg.opts:=0;
   success:=dwg_read_file(pchar(filename),@dwg);
+  writeln('success           ',success);
   writeln('version           ',dwg.header.version);
   writeln('from_version      ',dwg.header.from_version);
   writeln('zero_5[0]         ',dwg.header.zero_5[0]);
@@ -35,16 +36,17 @@ begin
   writeln('sizeof(dwg.header_vars)',sizeof(dwg.header_vars));
   writeln('dwg.header_vars.DWGCODEPAGE ',integer(dwg.header_vars.DWGCODEPAGE));
 
-  for i := 0 to dwg.num_objects do begin
-    case dwg.&object[i].fixedtype of
-      DWG_TYPE_TEXT:begin
-                      //writeln((PBITCODE_BS(dwg.&object[i].tio.entity^.tio.text^.text_value)^));
-                      //writeln(UnicodeCharToString(punicodechar(dwg.&object[i].tio.entity^.tio.text^.text_value)));
-                        writeln((pchar(dwg.&object[i].tio.entity^.tio.text^.text_value)));
-                    end;
-      //DWG_TYPE_TEXT:writeln({UnicodeCharToString}(pchar(dwg.&object[i].tio.entity^.tio.text^.text_value)^));
+  if dwg.num_objects>0 then
+    for i := 0 to dwg.num_objects-1 do begin
+      case dwg.&object[i].fixedtype of
+        DWG_TYPE_TEXT:begin
+                        //writeln((PBITCODE_BS(dwg.&object[i].tio.entity^.tio.text^.text_value)^));
+                        //writeln(UnicodeCharToString(punicodechar(dwg.&object[i].tio.entity^.tio.text^.text_value)));
+                          writeln((pchar(dwg.&object[i].tio.entity^.tio.text^.text_value)));
+                      end;
+        //DWG_TYPE_TEXT:writeln({UnicodeCharToString}(pchar(dwg.&object[i].tio.entity^.tio.text^.text_value)^));
+      end;
     end;
-  end;
   dwg_free(@dwg);
   FreeLibreDWG;
   readln;
