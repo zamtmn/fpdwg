@@ -26,7 +26,7 @@ unit dwgproc;
 
 interface
   uses
-    SysUtils, ctypes, dynlibs, dwg, Generics.Collections, TypInfo;
+    SysUtils, ctypes, dynlibs, dwg, ghashmap, TypInfo;
 
   resourcestring
     rsHandlerAlreadyReg='Handler already registered for %d';
@@ -58,6 +58,10 @@ interface
     TCounter=Integer;
     TProcessLongProcess=procedure(const Data:TData;const Counter:TCounter);
 
+    HashDWG_OBJECT_TYPE=class
+      class function hash(dot:DWG_OBJECT_TYPE; n:longint):SizeUInt;
+    end;
+
     generic GDWGParser<GUserCtx>=class
       type
         TDWGObjectLoadProc=procedure(var ZContext:GUserCtx;var DWGContext:TDWGCtx;var DWGObject:Dwg_Object;P:Pointer);
@@ -71,7 +75,7 @@ interface
         //TDWGObjectsDataDict=class (specialize TDictionary<DWG_OBJECT_TYPE,TDWGObjectData>)
         //  function GetMutableValue(key:DWG_OBJECT_TYPE; out PAValue:PTDWGObjectData):boolean;
         //end;
-        TDWGObjectsDataDict=specialize TDictionary<DWG_OBJECT_TYPE,TDWGObjectData>;
+        TDWGObjectsDataDict=specialize THashmap<DWG_OBJECT_TYPE,TDWGObjectData,HashDWG_OBJECT_TYPE>;
       var
         DWGObj2LPDict:TDWGObjectsDataDict;
       constructor create;
@@ -98,6 +102,11 @@ implementation
 
   var
     hlib : tlibhandle;
+
+   class function HashDWG_OBJECT_TYPE.hash(dot:DWG_OBJECT_TYPE; n:longint):SizeUInt;
+   begin
+     result:=ord(dot) mod SizeUInt(n);
+   end;
 
   procedure TDWGCtx.CreateRec(var ADWG:Dwg_Data);
   begin
@@ -130,7 +139,7 @@ implementation
       dod.Create;
       dod.LoadEntityProc:=LP;
       dod.LoadObjectProc:=nil;
-      DWGObj2LPDict.AddOrSetValue(DOT,dod);
+      DWGObj2LPDict.insert(DOT,dod);
     //end;
   end;
 
@@ -151,7 +160,7 @@ implementation
       dod.Create;
       dod.LoadEntityProc:=nil;
       dod.LoadObjectProc:=LP;
-      DWGObj2LPDict.AddOrSetValue(DOT,dod);
+      DWGObj2LPDict.insert(DOT,dod);
     //end;
   end;
 
@@ -187,7 +196,7 @@ implementation
     if DWGObj2LPDict<>nil then begin
       i:=0;
       while (i<dwg.num_objects) do begin
-        if DWGObj2LPDict.TryGetValue(dwg.&object[i].fixedtype,dod) then begin
+        if DWGObj2LPDict.GetValue(dwg.&object[i].fixedtype,dod) then begin
           if dod.LoadEntityProc<>nil then
             dod.LoadEntityProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.entity^.tio.UNUSED)
           else if dod.LoadObjectProc<>nil then
