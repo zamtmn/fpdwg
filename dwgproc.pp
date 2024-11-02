@@ -26,7 +26,7 @@ unit dwgproc;
 
 interface
   uses
-    SysUtils, ctypes, dynlibs, dwg, ghashmap, TypInfo;
+    SysUtils, {ctypes,} dynlibs, dwg, ghashmap, TypInfo;
 
   resourcestring
     rsHandlerAlreadyReg='Handler already registered for %d';
@@ -54,7 +54,7 @@ interface
       procedure CreateRec(var ADWG:Dwg_Data);
     end;
 
-    TData=Pointer;
+    TData=PtrInt;
     TCounter=Integer;
     TProcessLongProcess=procedure(const Data:TData;const Counter:TCounter);
 
