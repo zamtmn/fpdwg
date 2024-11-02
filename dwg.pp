@@ -12,8 +12,8 @@
 
 unit dwg;
 interface
-uses
-  ctypes;
+//uses
+//  ctypes;
 
 {
   Automatically converted by H2Pas 1.0.0 from dwg.h

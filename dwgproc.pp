@@ -124,7 +124,7 @@ implementation
 
   procedure GDWGParser.RegisterDWGEntityLoadProc(const DOT:DWG_OBJECT_TYPE;const LP:TDWGObjectLoadProc);
   var
-    pdod:PTDWGObjectData;
+    //pdod:PTDWGObjectData;
     dod:TDWGObjectData;
   begin
     //work in fpc3.2.2
@@ -145,7 +145,7 @@ implementation
 
   procedure GDWGParser.RegisterDWGObjectLoadProc(const DOT:DWG_OBJECT_TYPE;const LP:TDWGObjectLoadProc);
   var
-    pdod:PTDWGObjectData;
+    //pdod:PTDWGObjectData;
     dod:TDWGObjectData;
   begin
     //work in fpc3.2.2
