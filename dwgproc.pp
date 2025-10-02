@@ -199,9 +199,9 @@ implementation
       while (i<dwg.num_objects) do begin
         if DWGObj2LPDict.GetValue(dwg.&object[i].fixedtype,dod) then begin
           if (dod.LoadEntityProc<>nil) and (dwg.&object[i].tio.entity<>nil) then
-            dod.LoadEntityProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.entity^.tio.UNUSED)
+            dod.LoadEntityProc(ZContext,DWGContext,dwg.&object[i],@dwg.&object[i].tio.entity^.tio)
           else if (dod.LoadObjectProc<>nil) and (dwg.&object[i].tio.&object<>nil) then
-            dod.LoadObjectProc(ZContext,DWGContext,dwg.&object[i],dwg.&object[i].tio.&object^.tio.DUMMY);
+            dod.LoadObjectProc(ZContext,DWGContext,dwg.&object[i],@dwg.&object[i].tio.&object^.tio);
         end;
         if @lpp<>nil then
           lpp(data,i);
