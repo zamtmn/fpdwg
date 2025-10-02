@@ -10236,14 +10236,19 @@ in declaration at line 7399 *)
       _dwg_header = record
           version : Dwg_Version_Type;
           from_version : Dwg_Version_Type;
-          zero_5 : array[0..4] of BITCODE_RC;
           is_maint : BITCODE_RC;
           zero_one_or_three : BITCODE_RC;
-          unknown_3 : BITCODE_RS;
+          numentity_sections : BITCODE_RS;
           numheader_vars : BITCODE_RS;
           thumbnail_address : BITCODE_RL;
           dwg_version : BITCODE_RC;
           maint_version : BITCODE_RC;
+          entities_start : BITCODE_RL;
+          entities_end : BITCODE_RL;
+          blocks_start : BITCODE_RL;
+          blocks_size : BITCODE_RL;
+          extras_start : BITCODE_RL;
+          extras_size : BITCODE_RL;
           codepage : BITCODE_RS;
           unknown_0 : BITCODE_RC;
           app_dwg_version : BITCODE_RC;
@@ -10253,7 +10258,8 @@ in declaration at line 7399 *)
           summaryinfo_address : BITCODE_RL;
           vbaproj_address : BITCODE_RL;
           r2004_header_address : BITCODE_RL;
-          numsections : BITCODE_RL;
+          sections : BITCODE_RL;
+          num_sections : BITCODE_RL;
           section : PDwg_Section;
           section_infohdr : Dwg_Section_InfoHdr;
           section_info : PDwg_Section_Info;
