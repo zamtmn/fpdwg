@@ -2207,6 +2207,7 @@ __attribute__((visibility("default"))) const char* dwg_color_method_name (unsign
           &end : BITCODE_3BD;
           thickness : BITCODE_BT;
           extrusion : BITCODE_BE;
+          unknown_r11 : BITCODE_2RD;
         end;
       Dwg_Entity_LINE = _dwg_entity_LINE;
       //PDwg_Entity_LINE = ^Dwg_Entity_LINE;
@@ -9843,8 +9844,8 @@ in declaration at line 7399 *)
       //P_dwg_object = ^_dwg_object;
       _dwg_object = record
           size : BITCODE_RL;
-          address : dword;
-          _type : dword;
+          address : PtrUInt;
+          _type : BITCODE_BS;
           index : BITCODE_RL;
           fixedtype : DWG_OBJECT_TYPE;
           name : Pchar;
@@ -9859,15 +9860,17 @@ in declaration at line 7399 *)
           parent : P_dwg_struct;
           klass : PDwg_Class;
           bitsize : BITCODE_RL;
-          bitsize_pos : dword;
-          hdlpos : dword;
+          bitsize_pos : PtrUInt;
+          hdlpos : PtrUInt;
           was_bitsize_set : BITCODE_B;
           has_strings : BITCODE_B;
           stringstream_size : BITCODE_RL;
           handlestream_size : BITCODE_UMC;
-          common_size : dword;
+          common_size : PtrUInt;
           num_unknown_bits : BITCODE_RL;
           unknown_bits : BITCODE_TF;
+          num_unknown_rest : BITCODE_RL;
+          unknown_rest : BITCODE_TF;
         end;
       Dwg_Object = _dwg_object;
       //PDwg_Object = ^Dwg_Object;
