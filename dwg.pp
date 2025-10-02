@@ -1255,7 +1255,6 @@ in declaration at line 16 *)
       //PDWG_OBJECT_SUPERTYPE = ^DWG_OBJECT_SUPERTYPE;
       DWG_OBJECT_SUPERTYPE = (DWG_SUPERTYPE_ENTITY,DWG_SUPERTYPE_OBJECT
         );
-      Dwg_Object_Supertype = DWG_OBJECT_SUPERTYPE;
 	  
       //PDWG_OBJECT_TYPE = ^DWG_OBJECT_TYPE;
       DWG_OBJECT_TYPE = (DWG_TYPE_UNUSED = $00,DWG_TYPE_TEXT = $01,
@@ -9850,7 +9849,7 @@ in declaration at line 7399 *)
           fixedtype : DWG_OBJECT_TYPE;
           name : Pchar;
           dxfname : Pchar;
-          supertype : Dwg_Object_Supertype;
+          supertype : DWG_OBJECT_SUPERTYPE;
           tio : record
               case longint of
                 0 : ( entity : PDwg_Object_Entity );
