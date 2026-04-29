@@ -19,14 +19,8 @@ begin
   writeln('success           ',success);
   writeln('version           ',dwg.header.version);
   writeln('from_version      ',dwg.header.from_version);
-  writeln('zero_5[0]         ',dwg.header.zero_5[0]);
-  writeln('zero_5[1]         ',dwg.header.zero_5[1]);
-  writeln('zero_5[2]         ',dwg.header.zero_5[2]);
-  writeln('zero_5[3]         ',dwg.header.zero_5[3]);
-  writeln('zero_5[4]         ',dwg.header.zero_5[4]);
   writeln('is_maint          ',dwg.header.is_maint);
   writeln('zero_one_or_three ',dwg.header.zero_one_or_three);
-  writeln('unknown_3         ',dwg.header.unknown_3);
   writeln('numheader_vars    ',dwg.header.numheader_vars);
   writeln('thumbnail_address ',dwg.header.thumbnail_address);
   writeln('dwg_version       ',dwg.header.dwg_version);
