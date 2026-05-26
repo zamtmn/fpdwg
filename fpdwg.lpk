@@ -8,6 +8,7 @@
       <Version Value="11"/>
       <PathDelim Value="\"/>
       <SearchPaths>
+        <IncludeFiles Value="..\..\zengine"/>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
     </CompilerOptions>
@@ -19,6 +20,18 @@
       <Item>
         <Filename Value="dwgproc.pp"/>
         <UnitName Value="dwgproc"/>
+      </Item>
+      <Item>
+        <Filename Value="uzedwghandle.pas"/>
+        <UnitName Value="uzedwghandle"/>
+      </Item>
+      <Item>
+        <Filename Value="uzedwgtext.pas"/>
+        <UnitName Value="uzedwgtext"/>
+      </Item>
+      <Item>
+        <Filename Value="fpdwg.pas"/>
+        <UnitName Value="fpdwg"/>
       </Item>
     </Files>
     <RequiredPkgs>
