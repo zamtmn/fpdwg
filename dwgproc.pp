@@ -551,7 +551,12 @@ implementation
               dod.LoadObjectProc(ZContext,DWGContext,dwg.&object[i],nil);
           end;
         end;
-        if @lpp<>nil then
+        // Assigned(lpp), not @lpp<>nil: for a procedural variable @lpp yields
+        // the address of the variable itself (always non-nil), so the old guard
+        // always fired and called through a nil lpp. Callers that pass nil (no
+        // progress callback) — e.g. the unit tests — would crash. Assigned()
+        // tests the procedure value, so a nil callback is now correctly skipped.
+        if Assigned(lpp) then
           lpp(data,i);
         inc(i);
       end;
