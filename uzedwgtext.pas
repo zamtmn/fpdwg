@@ -40,6 +40,10 @@ procedure DWGSafeDecodeText(const p: BITCODE_T; Version: DWG_VERSION_TYPE;
 function DWGDecodedTextForZCAD(const Text: string): string;
 function DWGDecodedTextToZCADString(const Text: string): UnicodeString;
 function DWGDecodedTextToZCADTemplate(const Text: string): UnicodeString;
+{ Map a LibreDWG header codepage (Dwg_Codepage index or a real Windows
+  codepage number) to a system codepage. Returns False when unknown. }
+function DWGLibreCodePageToSystem(Codepage: Integer;
+  out SystemCodepage: TSystemCodePage): Boolean;
 
 implementation
 
