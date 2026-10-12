@@ -41,6 +41,9 @@ function DWGDecodedTextForZCAD(const Text: string): string;
 function DWGDecodedTextToZCADString(const Text: string): UnicodeString;
 function DWGDecodedTextToZCADTemplate(const Text: string): UnicodeString;
 
+function DWGLibreCodePageToSystem(Codepage: Integer;
+  out SystemCodepage: TSystemCodePage): Boolean;
+
 implementation
 
 const
