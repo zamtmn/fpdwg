@@ -45,9 +45,6 @@ function DWGDecodedTextToZCADTemplate(const Text: string): UnicodeString;
 function DWGLibreCodePageToSystem(Codepage: Integer;
   out SystemCodepage: TSystemCodePage): Boolean;
 
-function DWGLibreCodePageToSystem(Codepage: Integer;
-  out SystemCodepage: TSystemCodePage): Boolean;
-
 implementation
 
 const
